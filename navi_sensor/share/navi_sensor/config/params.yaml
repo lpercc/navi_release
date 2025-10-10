@@ -11,7 +11,10 @@ camera:
     # view: "front" # all front
     # resize_w: 410 # 224 410
     # resize_h: 390 # 224 390
-
+    cam_f_id: "/dev/left_front_surround"
+    cam_r_id: "/dev/right_front_surround"
+    cam_l_id: "/dev/right_rear_surround"
+    cam_b_id: "/dev/left_rear_surround"
 
 ### ekf config file ###
 ekf_filter_node:
