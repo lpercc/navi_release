@@ -1,0 +1,8 @@
+# 请求参数
+sensor_msgs/Image image   # 原始图像数据
+string instruction        # 操作指令
+string task_type          # 任务类型
+uint32 step               # 步数
+string target_pose #目标位姿
+string start_pose #起始位姿
+

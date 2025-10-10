@@ -1,0 +1,11 @@
+communicator_wbs:
+  ros__parameters:
+    debug_mode: False
+    response_timeout: 3
+    image_quality: 85
+    server_url: 'ws://192.168.10.130:6669' #'ws://8.140.196.220:8150' 'ws://192.168.10.130:6666' 'ws://192.168.80.19:6666'
+
+logger:
+  ros__parameters:
+    enable: False
+    storage_base_dir: 'recording_mv-navid'

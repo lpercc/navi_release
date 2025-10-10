@@ -1,0 +1,20 @@
+motion_controller_nav:
+  ros__parameters:
+    wireless: False
+
+motion_controller:
+  ros__parameters:
+    debug_mode: False
+    wireless: False
+    frqc: 100
+    safe_dis: 2 #1.5
+    safe_dis_y: 0.5
+    v_max: 1.5 # 7 4
+    vy_max: 0.6 # 
+    vyaw_max: 1.5
+    Kp_rho: 3 #4
+    Kp_alph: 2 #4
+    Kp_beta: 5 #5 3
+    motion_timeout: 0.1 #0.1 0.2
+    max_points: 600
+    avoid_mode: 1 # 0 1

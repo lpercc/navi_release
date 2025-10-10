@@ -1,0 +1,44 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from navi_interface/srv/Upload.srv
+// generated code does not contain a copyright notice
+
+#include "sensor_msgs/msg/Image.idl"
+
+module navi_interface {
+  module srv {
+    @verbatim (language="comment", text=
+      " 请求参数")
+    struct Upload_Request {
+      @verbatim (language="comment", text=
+        " 原始图像数据")
+      sensor_msgs::msg::Image image;
+
+      @verbatim (language="comment", text=
+        " 操作指令")
+      string instruction;
+
+      @verbatim (language="comment", text=
+        " 任务类型")
+      string task_type;
+
+      @verbatim (language="comment", text=
+        " 步数")
+      uint32 step;
+
+      @verbatim (language="comment", text=
+        "目标位姿")
+      string target_pose;
+
+      @verbatim (language="comment", text=
+        "起始位姿")
+      string start_pose;
+    };
+    @verbatim (language="comment", text=
+      " 响应参数")
+    struct Upload_Response {
+      @verbatim (language="comment", text=
+        " 云端返回结果")
+      string result;
+    };
+  };
+};

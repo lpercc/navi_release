@@ -1,0 +1,5 @@
+agent:
+  ros__parameters:
+    task: 'follow-uwb' # vln follow follow-uwb urban
+    storage_base_dir: 'recording_mv-navid'
+

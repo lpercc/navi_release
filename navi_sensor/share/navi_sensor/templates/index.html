@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Galbot Navi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f7f9fc;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2em;
+            margin: 30px 0 20px;
+            color: #333;
+        }
+
+        .main {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .left,
+        .right {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold; /* 加粗字体 */
+            border: 2px solid #f3f0f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            resize: none;
+            height: 100px; /* 增加高度，例如原来是 60px */
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px; /* 控制按钮之间的间距 */
+            margin-bottom: 15px;
+        }
+
+        button {
+            font-size: 1.1em;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #status {
+            font-size: 1em;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        #gps {
+            font-size: 1em;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        #uwb {
+            font-size: 1em;
+            color: #555;
+            margin-top: 10px;
+        }
+        #logPanel {
+            background-color: #1e1e1e;
+            color: #6fadff;
+            font-family: monospace;
+            font-size: 0.9em;
+            padding: 10px;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 1200px;
+            height: 200px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+            box-shadow: inset 0 0 5px #000;
+        }
+        .camera-view {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Galbot Navi</h1>
+
+    <div class="main">
+        <div class="left">
+            <textarea id="cmdInput" placeholder="Enter command"></textarea><br />
+            <div class="button-group">
+                <button onclick="sendStart()">Start</button>
+                <button onclick="sendStop()">Stop</button>
+                <button id="voiceButton">🎤 Speak</button>
+            </div>
+            <p id="status">Waiting Instruction...</p>
+            <p id="gps">Waiting GPS...</p>
+            <p id="uwb">Waiting UWB...</p>
+        </div>
+
+        <div class="right">
+            <img id="liveImage" src="/image" alt="Live Camera" class="camera-view" />
+            <!-- <audio id="playback" controls autoplay></audio> -->
+        </div>
+
+    </div>
+    <!-- 把日志面板单独放在 main 外 -->
+    <div id="logPanel"></div>
+    <script>
+        async function sendCommand(command) {
+            const formData = new FormData();
+            formData.append('cmd', command);
+
+            const response = await fetch('/send_command', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('status').textContent = result.message;
+        }
+
+        async function getGPS() {
+            const formData = new FormData();
+            formData.append('cmd', 'get GPS pose');
+
+            const response = await fetch('/gps', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('gps').textContent = "GPS" + " latitude:" + result.message.latitude + " longitude:" + result.message.latitude + " azimuth:" + result.message.azimuth;
+        }
+
+        async function getUWB() {
+            const formData = new FormData();
+            formData.append('cmd', 'get UWB pose');
+
+            const response = await fetch('/uwb', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('uwb').textContent = "UWB" + " x:" + result.message.x + " y:" + result.message.y + " yaw:" + result.message.yaw;
+        }
+
+        async function getLog() {
+            const formData = new FormData();
+            formData.append('cmd', 'get log');
+
+            const response = await fetch('/log', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            appendLog(`${result.message}`);
+        }
+
+        function sendStart() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (cmd.trim() !== '') {
+                sendCommand(cmd);
+            }
+        }
+
+        function sendStop() {
+            sendCommand('stop');
+        }
+
+        function refreshImage() {
+            const img = document.getElementById('liveImage');
+            img.src = '/image?rand=' + Math.random();
+        }
+
+        function refreshGPS() {
+            getGPS();
+        }
+
+        function refreshUWB() {
+            getUWB();
+        }
+
+        function refreshLog() {
+            getLog();
+        }
+
+        function appendLog(message) {
+            if (!message || message.trim() === '') return;
+
+            const logPanel = document.getElementById('logPanel');
+            // const timeStr = new Date().toLocaleTimeString();
+
+            const line = document.createElement('div');
+            line.textContent = `${message}`;
+            logPanel.appendChild(line);
+
+            // 限制最多 1000 条日志行
+            if (logPanel.childNodes.length > 100) {
+                logPanel.removeChild(logPanel.firstChild);
+            }
+
+            // 自动滚动到底部
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        setInterval(refreshImage, 100);
+        setInterval(refreshGPS, 100);
+        setInterval(refreshUWB, 100);
+        setInterval(refreshLog, 100);
+
+        document.getElementById('voiceButton').addEventListener('click', async () => {
+            const btn = document.getElementById('voiceButton');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            try {
+                const response = await fetch('/audio', { method: 'POST' });
+                const result = await response.json();
+                document.getElementById('cmdInput').value = result.message;
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                document.getElementById('status').textContent = 'Failed to start recording';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🎤 Speak';
+            }
+        });
+    </script>
+</body>
+</html>

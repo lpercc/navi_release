@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Galbot Navigation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基础样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7f9fc;
+            color: #333;
+            line-height: 1.5;
+            padding: 10px;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin: 0 0 10px 0;
+            color: #333;
+            padding: 0 10px;
+        }
+        
+        /* 主容器 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 100%;
+            height: calc(100vh - 20px); /* 确保使用全屏高度 */
+        }
+        
+        /* 状态区域 */
+        .status-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .status-box {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        #status, #gps, #uwb {
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-height: 44px; /* 触摸友好 */
+        }
+        
+        button i {
+            font-size: 1.1rem;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        /* 目的地输入 */
+        .destination-input {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        #cmdInput {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #e6e6e6;
+            border-radius: 8px;
+            background: #fff;
+        }
+        
+        /* 路径点面板 */
+        .points-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        
+        .points-panel h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .points-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .points-list li {
+            padding: 6px 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* 摄像头视图 */
+        .camera-container {
+            flex: 1;
+            min-height: 180px;
+            max-height: 25vh;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: #000;
+        }
+        
+        #liveImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+        
+        /* 地图区域 */
+        .map-section {
+            flex: 2;
+            min-height: 30vh;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .map-container {
+            flex: 1;
+            min-height: 250px; /* 增加地图高度 */
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: #e9ecef;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 地图控制按钮 */
+        .map-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+            position: sticky;
+            bottom: 10px;
+            z-index: 100;
+        }
+        
+        .map-controls button {
+            padding: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .map-controls button.refresh {
+            background-color: #28a745;
+        }
+        
+        .map-controls button.auto-refresh {
+            background-color: #17a2b8;
+        }
+        
+        .map-controls button.clear {
+            background-color: #dc3545;
+        }
+        
+        .auto-refresh-active {
+            background-color: #138496 !important;
+            box-shadow: 0 0 5px rgba(23, 162, 184, 0.4);
+        }
+        
+        /* 响应式调整 */
+        @media (min-height: 700px) {
+            .camera-container {
+                max-height: 25vh;
+            }
+            
+            .map-container {
+                min-height: 35vh;
+            }
+        }
+        
+        @media (min-height: 800px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .camera-container {
+                max-height: 30vh;
+            }
+            
+            .map-container {
+                min-height: 40vh;
+            }
+        }
+        
+        /* 小屏幕调整 */
+        @media (max-width: 350px) {
+            button span {
+                display: none;
+            }
+            
+            button i {
+                font-size: 1.2rem;
+            }
+            
+            .button-group, .map-controls {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Galbot Navigation</h1>
+
+    <div class="container">
+        <!-- 状态区域 -->
+        <div class="status-area">
+            <div class="status-box">
+                <p id="status">Status: Ready</p>
+                <p id="gps">GPS: Waiting for data...</p>
+                <p id="uwb">UWB: Waiting for data...</p>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="sendStart()">
+                    <i class="fas fa-play"></i> <span>Start</span>
+                </button>
+                <button onclick="sendStop()">
+                    <i class="fas fa-stop"></i> <span>Stop</span>
+                </button>
+                <button id="voiceButton">
+                    <i class="fas fa-microphone"></i> <span>Voice</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 目的地输入 -->
+        <div class="destination-input">
+            <input type="text" id="cmdInput" placeholder="Destination (e.g. Peking University)">
+        </div>
+        
+        <!-- 路径点面板 -->
+        <div class="points-panel">
+            <h3><i class="fas fa-map-marker-alt"></i> Next 5 Path Points</h3>
+            <ul class="points-list" id="points-list">
+                <li><i class="fas fa-hourglass-half"></i> Calculating path points...</li>
+            </ul>
+        </div>
+        
+        <!-- 摄像头视图 -->
+        <div class="camera-container">
+            <img id="liveImage" src="/image" alt="Live Camera">
+        </div>
+        
+        <!-- 地图区域 -->
+        <div class="map-section">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <div class="map-controls">
+                <button class="refresh" onclick="calculatePathPoints()">
+                    <i class="fas fa-sync"></i> <span>Refresh</span>
+                </button>
+                <button class="auto-refresh" id="autoRefreshBtn" onclick="toggleAutoRefresh()">
+                    <i class="fas fa-sync-alt"></i> <span>Auto</span>
+                </button>
+                <button class="clear" onclick="clearMap()">
+                    <i class="fas fa-trash"></i> <span>Clear</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://webapi.amap.com/maps?v=2.0&key=c343a04acd8c2f1c38df12eee4cd9ad7"></script>
+    <script>
+        // 地球半径（米）
+        const R = 6371000;
+        
+        // 初始化地图
+        const map = new AMap.Map('map', {
+            zoom: 16,
+            touchZoomCenter: 1,
+            doubleClickZoom: false,
+            zoomEnable: true,
+            dragEnable: true
+        });
+        
+        // 用于存储标记和折线
+        let markers = [];
+        let polylines = [];
+        
+        // 存储当前GPS数据
+        let currentGPS = {
+            longitude: null,
+            latitude: null,
+            azimuth: null
+        };
+        
+        // 自动刷新状态
+        let isAutoRefreshActive = false;
+        let autoRefreshTimer = null;
+        
+        // 坐标转换函数
+        function convert_coords(point, mid_point) {
+            const [lon, lat] = point;
+            const [mid_lon, mid_lat] = mid_point;
+            
+            return [
+                R * (lon - mid_lon) * (Math.PI/180) * Math.cos(mid_lat * Math.PI/180),
+                R * (lat - mid_lat) * (Math.PI/180)
+            ];
+        }
+        
+        // 坐标反向转换函数
+        function convert_coords_inv(coords, mid_point) {
+            const [x, y] = coords;
+            const [mid_lon, mid_lat] = mid_point;
+            
+            return [
+                mid_lon + (x / (R * Math.cos(mid_lat * Math.PI/180))) * (180/Math.PI),
+                mid_lat + (y / R) * (180/Math.PI)
+            ];
+        }
+        
+        // 世界坐标转机器人坐标系
+        function world_to_ego(points, ego_pos, ego_theta) {
+            const [ex, ey] = ego_pos;
+            const cos_t = Math.cos(ego_theta);
+            const sin_t = Math.sin(ego_theta);
+            
+            return points.map(([x, y]) => {
+                const dx = x - ex;
+                const dy = y - ey;
+                return [
+                    cos_t * dx + sin_t * dy,
+                    -sin_t * dx + cos_t * dy
+                ];
+            });
+        }
+        
+        // 按距离重采样
+        function resample_by_distance(polyline, step = 2.0) {
+            if (!polyline.length || step <= 0) return [...polyline];
+            
+            const pts = polyline.map(p => [p[0], p[1]]);
+            if (pts.length === 1) return [pts[0]];
+            
+            const resampled = [pts[0]];
+            let travelled = 0.0;
+            let i = 0;
+            
+            while (i < pts.length - 1) {
+                let seg_start = pts[i];
+                let seg_end = pts[i + 1];
+                let dx = seg_end[0] - seg_start[0];
+                let dy = seg_end[1] - seg_start[1];
+                let seg_len = Math.sqrt(dx * dx + dy * dy);
+                
+                while (travelled + seg_len >= step) {
+                    const ratio = (step - travelled) / seg_len;
+                    const new_x = seg_start[0] + dx * ratio;
+                    const new_y = seg_start[1] + dy * ratio;
+                    resampled.push([new_x, new_y]);
+                    
+                    // 更新起点
+                    seg_start = [new_x, new_y];
+                    dx = seg_end[0] - seg_start[0];
+                    dy = seg_end[1] - seg_start[1];
+                    seg_len = Math.sqrt(dx * dx + dy * dy);
+                    travelled = 0.0;
+                }
+                
+                travelled += seg_len;
+                i++;
+            }
+            
+            if (resampled.length > 0 && 
+                (resampled[resampled.length-1][0] !== pts[pts.length-1][0] || 
+                 resampled[resampled.length-1][1] !== pts[pts.length-1][1])) {
+                resampled.push(pts[pts.length-1]);
+            }
+            
+            return resampled;
+        }
+        
+        // 从路径数据中提取折线点
+        function extract_polylines(path) {
+            const coords = [];
+            for (const step of path.steps) {
+                const points = step.polyline.split(';');
+                for (const point of points) {
+                    const [lng, lat] = point.split(',').map(Number);
+                    coords.push([lng, lat]);
+                }
+            }
+            return coords;
+        }
+        
+        // 高德地理编码
+        async function amap_geocode(address, city = null) {
+            const url = "https://restapi.amap.com/v5/geocode/geo";
+            const params = new URLSearchParams({
+                address: address,
+                key: "c343a04acd8c2f1c38df12eee4cd9ad7"
+            });
+            
+            if (city) params.append("city", city);
+            
+            try {
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+                
+                if (data.status === "1" && data.count > 0) {
+                    return data.geocodes[0].location;
+                } else {
+                    throw new Error(data.info || "Geocoding failed");
+                }
+            } catch (error) {
+                throw new Error(`Geocoding error: ${error.message}`);
+            }
+        }
+        
+        // 高德步行导航
+        async function amap_navi(origin, destination) {
+            const url = "https://restapi.amap.com/v5/direction/walking";
+            const params = new URLSearchParams({
+                origin: origin,
+                destination: destination,
+                key: "c343a04acd8c2f1c38df12eee4cd9ad7",
+                alternative_route: "3",
+                show_fields: "navi,polyline"
+            });
+            
+            try {
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+                
+                if (data.status === "1") {
+                    return data.route.paths;
+                } else {
+                    throw new Error(data.info || "Path planning failed");
+                }
+            } catch (error) {
+                throw new Error(`Path planning error: ${error.message}`);
+            }
+        }
+        
+        // 坐标转换API
+        async function convert_gps_coord(longitude, latitude) {
+            const url = "https://restapi.amap.com/v3/assistant/coordinate/convert";
+            const params = new URLSearchParams({
+                locations: `${longitude},${latitude}`,
+                key: "c343a04acd8c2f1c38df12eee4cd9ad7",
+                coordsys: 'gps'
+            });
+            
+            try {
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+                
+                if (data.status === '1' && data.locations) {
+                    return data.locations.split(',').map(Number);
+                } else {
+                    throw new Error(data.info || "Coordinate conversion failed");
+                }
+            } catch (error) {
+                throw new Error(`Coordinate conversion error: ${error.message}`);
+            }
+        }
+        
+        // 计算路径点
+        async function calculatePathPoints() {
+            // 获取目的地
+            const destination = document.getElementById('cmdInput').value;
+            
+            // 检查是否有有效的GPS数据
+            if (!currentGPS.longitude || !currentGPS.latitude || !currentGPS.azimuth) {
+                document.getElementById('status').textContent = "Status: Waiting for GPS data...";
+                return;
+            }
+            
+            if (!destination) {
+                document.getElementById('status').textContent = "Status: Please enter a destination";
+                return;
+            }
+            
+            try {
+                // 更新状态
+                document.getElementById('status').textContent = "Status: Calculating path...";
+                
+                // 转换GPS坐标到高德坐标
+                const [convertedLng, convertedLat] = await convert_gps_coord(
+                    currentGPS.longitude, 
+                    currentGPS.latitude
+                );
+                
+                // 获取目的地坐标
+                const destLocation = await amap_geocode(destination);
+                const [destLng, destLat] = destLocation.split(',').map(Number);
+                
+                // 获取步行路径
+                const origin = `${convertedLng},${convertedLat}`;
+                const paths = await amap_navi(origin, `${destLng},${destLat}`);
+                
+                if (!paths || paths.length === 0) {
+                    throw new Error("No path found");
+                }
+                
+                // 提取折线点
+                const polyline = extract_polylines(paths[0]);
+                
+                // 计算中点
+                const mid_lon = polyline.reduce((sum, p) => sum + p[0], 0) / polyline.length;
+                const mid_lat = polyline.reduce((sum, p) => sum + p[1], 0) / polyline.length;
+                const mid_point = [mid_lon, mid_lat];
+                
+                // 转换为平面坐标
+                const converted_polyline = polyline.map(point => convert_coords(point, mid_point));
+                const converted_ego_coord = convert_coords([convertedLng, convertedLat], mid_point);
+                
+                // 重采样并取前5个点
+                let goal_point = resample_by_distance(converted_polyline, 2.0).slice(0, 5);
+                
+                // 转换为机器人坐标系
+                const ego_goal_point = world_to_ego(goal_point, converted_ego_coord, currentGPS.azimuth);
+                
+                // 显示结果
+                const pointsList = document.getElementById('points-list');
+                pointsList.innerHTML = '';
+                ego_goal_point.forEach(([x, y], i) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<i class="fas fa-location-dot"></i> Pt ${i+1}: (${x.toFixed(2)}, ${y.toFixed(2)})`;
+                    pointsList.appendChild(li);
+                });
+                
+                document.getElementById('status').textContent = "Status: Path calculated!";
+                
+                // 在地图上绘制路径和点
+                renderMap(polyline, ego_goal_point, converted_ego_coord, mid_point, currentGPS.azimuth);
+                
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').textContent = `Status: Error - ${error.message}`;
+                
+                const pointsList = document.getElementById('points-list');
+                pointsList.innerHTML = '<li><i class="fas fa-exclamation-triangle"></i> Failed to calculate path</li>';
+            }
+        }
+        
+        // 在地图上绘制路径和点
+        function renderMap(polyline, ego_points, ego_coord, mid_point, azimuth) {
+            // 清除之前的覆盖物
+            clearMap();
+            
+            // 绘制完整路径
+            const pathLine = new AMap.Polyline({
+                path: polyline,
+                strokeColor: "#3366FF",
+                strokeOpacity: 0.7,
+                strokeWeight: 6,
+                strokeStyle: "solid"
+            });
+            map.add(pathLine);
+            polylines.push(pathLine);
+            
+            // 计算起点（机器人当前位置）
+            const [ex, ey] = ego_coord;
+            const cos_t = Math.cos(azimuth);
+            const sin_t = Math.sin(azimuth);
+            
+            // 添加起点标记
+            const startLonLat = convert_coords_inv(ego_coord, mid_point);
+            const startMarker = new AMap.Marker({
+                position: startLonLat,
+                content: '<div style="background:#4ecdc4;width:20px;height:20px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;"><i class="fas fa-robot" style="font-size:10px;"></i></div>',
+                offset: new AMap.Pixel(-10, -10)
+            });
+            map.add(startMarker);
+            markers.push(startMarker);
+            
+            azimuth = -azimuth + Math.PI / 2;
+
+            // 添加方向指示器
+            const directionMarker = new AMap.Marker({
+                position: startLonLat,
+                content: `<div style="transform:rotate(${azimuth}rad);">
+                    <i class="fas fa-arrow-up" style="font-size:20px;color:#ffcc00;"></i>
+                </div>`,
+                offset: new AMap.Pixel(0, 0)
+            });
+            map.add(directionMarker);
+            markers.push(directionMarker);
+            
+            // 添加终点标记
+            const endLonLat = polyline[polyline.length - 1];
+            const endMarker = new AMap.Marker({
+                position: endLonLat,
+                content: '<div style="background:#ff6b6b;width:20px;height:20px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;"><i class="fas fa-flag" style="font-size:10px;"></i></div>',
+                offset: new AMap.Pixel(-10, -10)
+            });
+            // map.add(endMarker);
+            markers.push(endMarker);
+            
+            // 添加路径点标记
+            ego_points.forEach(([x, y], i) => {
+                // 将机器人坐标转回世界坐标
+                const world_x = ex + cos_t * x - sin_t * y;
+                const world_y = ey + sin_t * x + cos_t * y;
+                
+                // 转回经纬度
+                const pointLonLat = convert_coords_inv([world_x, world_y], mid_point);
+                
+                const marker = new AMap.Marker({
+                    position: pointLonLat,
+                    content: `<div style="background:#FFA500;width:24px;height:24px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;">${i+1}</div>`,
+                    offset: new AMap.Pixel(-12, -12)
+                });
+                map.add(marker);
+                markers.push(marker);
+                
+                // 添加点到起点的连线
+                const pointLine = new AMap.Polyline({
+                    path: [startLonLat, pointLonLat],
+                    strokeColor: "#FFA500",
+                    strokeOpacity: 0.5,
+                    strokeWeight: 2,
+                    strokeStyle: "dashed"
+                });
+                map.add(pointLine);
+                polylines.push(pointLine);
+            });
+            
+            // 调整地图视野
+            // map.setFitView();
+            map.setCenter(startLonLat);
+            // map.setZoom(map.getZoom()+3);
+        }
+        
+        // 清除地图上的覆盖物
+        function clearMap() {
+            markers.forEach(marker => map.remove(marker));
+            polylines.forEach(polyline => map.remove(polyline));
+            markers = [];
+            polylines = [];
+        }
+        
+        // 切换自动刷新状态
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+            isAutoRefreshActive = !isAutoRefreshActive;
+            
+            if (isAutoRefreshActive) {
+                btn.classList.add('auto-refresh-active');
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Auto ON</span>';
+                startAutoRefresh();
+            } else {
+                btn.classList.remove('auto-refresh-active');
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Auto</span>';
+                stopAutoRefresh();
+            }
+        }
+        
+        // 启动自动刷新
+        function startAutoRefresh() {
+            // 先立即刷新一次
+            calculatePathPoints();
+            
+            // 设置定时器每500ms刷新一次
+            autoRefreshTimer = setInterval(() => {
+                calculatePathPoints();
+            }, 500);
+        }
+        
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+        }
+        
+        // 原有Galbot功能
+        async function sendCommand(command) {
+            const formData = new FormData();
+            formData.append('cmd', command);
+
+            const response = await fetch('/send_command', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('status').textContent = "Status: " + result.message;
+        }
+
+        async function getGPS() {
+            try {
+                const formData = new FormData();
+                formData.append('cmd', 'get GPS pose');
+
+                const response = await fetch('/gps', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.message) {
+                    // 更新当前GPS数据
+                    currentGPS.longitude = result.message.longitude;
+                    currentGPS.latitude = result.message.latitude;
+                    currentGPS.azimuth = result.message.azimuth;
+                    
+                    // 更新显示
+                    document.getElementById('gps').innerHTML = 
+                        `GPS: lng: ${result.message.longitude.toFixed(6)}, lat: ${result.message.latitude.toFixed(6)}<br>` +
+                        `&nbsp;&nbsp;&nbsp;&nbsp;azi: ${result.message.azimuth.toFixed(2)}`;
+
+                    // 更新地图中心点
+                    // map.setCenter([result.message.longitude, result.message.latitude]);
+                }
+            } catch (error) {
+                console.error('GPS Error:', error);
+            }
+        }
+
+        async function getUWB() {
+            try {
+                const formData = new FormData();
+                formData.append('cmd', 'get UWB pose');
+
+                const response = await fetch('/uwb', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.message) {
+                    document.getElementById('uwb').textContent = 
+                        `UWB: x: ${result.message.x.toFixed(2)}, y: ${result.message.y.toFixed(2)}`;
+                }
+            } catch (error) {
+                console.error('UWB Error:', error);
+            }
+        }
+
+        function sendStart() {
+            const cmd = document.getElementById('cmdInput').value;
+            if (cmd.trim() !== '') {
+                sendCommand(cmd);
+                // 启动路径点计算
+                calculatePathPoints();
+                // 自动启动自动刷新
+                if (!isAutoRefreshActive) {
+                    toggleAutoRefresh();
+                }
+            } else {
+                document.getElementById('status').textContent = "Status: Please enter a destination";
+            }
+        }
+
+        function sendStop() {
+            sendCommand('stop');
+            // 清除地图
+            clearMap();
+            // 停止自动刷新
+            if (isAutoRefreshActive) {
+                toggleAutoRefresh();
+            }
+            document.getElementById('points-list').innerHTML = '<li><i class="fas fa-stop-circle"></i> Navigation stopped</li>';
+            document.getElementById('status').textContent = "Status: Navigation stopped";
+        }
+
+        function refreshImage() {
+            const img = document.getElementById('liveImage');
+            // 添加时间戳防止缓存
+            const timestamp = new Date().getTime();
+            img.src = '/image?t=' + timestamp;
+        }
+
+        // 初始化函数
+        function init() {
+            // 设置定时器
+            setInterval(refreshImage, 100);
+            setInterval(getGPS, 1000);
+            setInterval(getUWB, 1000);
+            
+            // 语音按钮事件
+            document.getElementById('voiceButton').addEventListener('click', async () => {
+                const btn = document.getElementById('voiceButton');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Listening</span>';
+                try {
+                    const response = await fetch('/audio', { method: 'POST' });
+                    const result = await response.json();
+                    document.getElementById('cmdInput').value = result.message;
+                } catch (error) {
+                    console.error('Voice Error:', error);
+                    document.getElementById('status').textContent = 'Status: Voice command failed';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-microphone"></i> <span>Voice</span>';
+                }
+            });
+            
+            // 初始化地图控件
+            map.plugin('AMap.Geolocation', function() {
+                const geolocation = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    zoomToAccuracy: true
+                });
+                map.addControl(geolocation);
+            });
+            
+            // 初始定位到北京
+            map.setCenter([116.397428, 39.90923]);
+            map.setZoom(18);
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
