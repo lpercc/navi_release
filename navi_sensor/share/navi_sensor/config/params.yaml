@@ -8,7 +8,7 @@ camera:
     view: "all" # all front
     resize_w: 224 # 224 410
     resize_h: 224 # 224 390
-    # view: "front" # all front
+    # view: "all" # all front
     # resize_w: 410 # 224 410
     # resize_h: 390 # 224 390
     cam_f_id: "/dev/left_front_surround"
