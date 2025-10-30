@@ -81,6 +81,9 @@ WantedBy=multi-user.target" > "navi_robot.service"
 sudo cp ~/navi_release/navi_robot.service /etc/systemd/system
 
 sudo systemctl daemon-reexec
+sudo systemctl disable start_rtsp_surrounds.service
+sudo systemctl stop start_rtsp_surrounds.service
+
 sudo systemctl enable navi_robot.service
 sudo systemctl start navi_robot.service
 
