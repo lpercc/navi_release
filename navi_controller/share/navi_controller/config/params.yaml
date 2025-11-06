@@ -1,6 +1,8 @@
 motion_controller_nav:
   ros__parameters:
     wireless: False
+    speed_level: 0
+    walk_state: 'c' # 's' 'c' 'f'
 
 motion_controller:
   ros__parameters:
