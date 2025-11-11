@@ -1,121 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Galbot Navi</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f7f9fc;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2.2em;
-            margin: 30px 0 20px;
-            color: #333;
-        }
-
-        .main {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .left,
-        .right {
-            flex: 1;
-            max-width: 500px;
-        }
-
-        textarea,
-        input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.1em;
-            font-weight: bold; /* 加粗字体 */
-            border: 2px solid #f3f0f0;
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-
-        textarea {
-            resize: none;
-            height: 100px; /* 增加高度，例如原来是 60px */
-        }
-
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 40px; /* 控制按钮之间的间距 */
-            margin-bottom: 15px;
-        }
-
-        button {
-            font-size: 1.1em;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #status {
-            font-size: 1em;
-            color: #555;
-            margin-top: 10px;
-        }
-
-        #gps {
-            font-size: 1em;
-            color: #555;
-            margin-top: 10px;
-        }
-
-        #uwb {
-            font-size: 1em;
-            color: #555;
-            margin-top: 10px;
-        }
-        #logPanel {
-            background-color: #1e1e1e;
-            color: #6fadff;
-            font-family: monospace;
-            font-size: 0.9em;
-            padding: 10px;
-            margin: 20px auto;
-            width: 90%;
-            max-width: 1200px;
-            height: 200px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            overflow-y: scroll;
-            white-space: pre-wrap;
-            box-shadow: inset 0 0 5px #000;
-        }
-        .camera-view {
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        audio {
-            width: 100%;
-        }
+        :root { --bg:#f7f9fc; --text:#333; --muted:#555; --primary:#007bff; --primary-hover:#0056b3; --border:#f3f0f0; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: var(--bg); }
+        h1 { text-align: center; font-size: 2.2em; margin: 30px 0 20px; color: var(--text); }
+        .main { display: flex; justify-content: center; align-items: flex-start; gap: 40px; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .left, .right { flex: 1; max-width: 500px; }
+        textarea, input[type="text"], select { width: 100%; padding: 15px; font-size: 1.1em; font-weight: bold; border: 2px solid var(--border); border-radius: 8px; margin-bottom: 20px; background: #fff; }
+        textarea { resize: none; height: 100px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+        button { font-size: 1.05em; padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; background-color: var(--primary); color: #fff; transition: background-color 0.2s ease; }
+        button:hover { background-color: var(--primary-hover); }
+        #status, #gps, #uwb { font-size: 1em; color: var(--muted); margin-top: 10px; }
+        #logPanel { background-color: #1e1e1e; color: #6fadff; font-family: monospace; font-size: 0.9em; padding: 10px; margin: 20px auto; width: 90%; max-width: 1200px; height: 200px; border: 1px solid #ccc; border-radius: 8px; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 0 5px #000; }
+        .camera-view { width: 100%; border-radius: 8px; margin-bottom: 20px; }
+        .card { background:#fff; border:1px solid #e9eef5; border-radius:12px; padding:16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-bottom: 16px; }
+        .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+        label { display:block; font-size:0.95em; font-weight:600; color:#394b63; margin-bottom:6px; }
+        .inline-hint { font-size: 0.9em; color: #667; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -123,146 +30,199 @@
 
     <div class="main">
         <div class="left">
-            <textarea id="cmdInput" placeholder="Enter command"></textarea><br />
-            <div class="button-group">
-                <button onclick="sendStart()">Start</button>
-                <button onclick="sendStop()">Stop</button>
-                <button id="voiceButton">🎤 Speak</button>
+            <div class="card">
+                <textarea id="cmdInput" placeholder="Enter command"></textarea>
+                <div class="button-group">
+                    <button id="startBtn" type="button">Start</button>
+                    <button id="stopBtn" type="button">Stop</button>
+                    <!-- <button id="voiceButton" type="button">🎤 Speak</button> -->
+                </div>
+                <p id="status">Waiting Instruction...</p>
             </div>
-            <p id="status">Waiting Instruction...</p>
-            <p id="gps">Waiting GPS...</p>
-            <p id="uwb">Waiting UWB...</p>
+
+            <!-- NEW: Walk controls -->
+            <div class="card" aria-labelledby="walk-controls-heading">
+                <h2 id="walk-controls-heading" style="margin:0 0 12px; font-size:1.2em; color:#223;">Walk Controls</h2>
+                <div class="grid-2">
+                    <div>
+                        <label for="walkState">Walk State</label>
+                        <select id="walkState">
+                            <option value="Static">Static</option>
+                            <option value="Classic">Classic</option>
+                            <option value="Free">Free</option>
+                        </select>
+                        <div class="inline-hint">Choose behavior mode.</div>
+                    </div>
+                    <div>
+                        <label for="walkSpeed">Speed</label>
+                        <select id="walkSpeed">
+                            <option value="-1">-1</option>
+                            <option value="0" selected>0</option>
+                            <option value="1">1</option>
+                        </select>
+                        <div class="inline-hint">-1, 0, or 1.</div>
+                    </div>
+                </div>
+                <div class="button-group" style="margin-top:8px;">
+                    <button id="applyWalkBtn" type="button">Apply Walk Settings</button>
+                </div>
+                <p id="walkStatus" class="inline-hint">Not set yet.</p>
+            </div>
+
+            <div class="card">
+                <p id="gps">Waiting GPS...</p>
+                <p id="uwb">Waiting UWB...</p>
+            </div>
         </div>
 
         <div class="right">
             <img id="liveImage" src="/image" alt="Live Camera" class="camera-view" />
             <!-- <audio id="playback" controls autoplay></audio> -->
         </div>
-
     </div>
-    <!-- 把日志面板单独放在 main 外 -->
-    <div id="logPanel"></div>
+
+    <div id="logPanel" aria-live="polite" aria-label="Log output"></div>
+
     <script>
+        // --- Networking helpers ---
         async function sendCommand(command) {
-            const formData = new FormData();
-            formData.append('cmd', command);
-
-            const response = await fetch('/send_command', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            document.getElementById('status').textContent = result.message;
-        }
-
-        async function getGPS() {
-            const formData = new FormData();
-            formData.append('cmd', 'get GPS pose');
-
-            const response = await fetch('/gps', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            document.getElementById('gps').textContent = "GPS" + " latitude:" + result.message.latitude + " longitude:" + result.message.latitude + " azimuth:" + result.message.azimuth;
-        }
-
-        async function getUWB() {
-            const formData = new FormData();
-            formData.append('cmd', 'get UWB pose');
-
-            const response = await fetch('/uwb', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            document.getElementById('uwb').textContent = "UWB" + " x:" + result.message.x + " y:" + result.message.y + " yaw:" + result.message.yaw;
-        }
-
-        async function getLog() {
-            const formData = new FormData();
-            formData.append('cmd', 'get log');
-
-            const response = await fetch('/log', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            appendLog(`${result.message}`);
-        }
-
-        function sendStart() {
-            const cmd = document.getElementById('cmdInput').value;
-            if (cmd.trim() !== '') {
-                sendCommand(cmd);
+            try {
+                const formData = new FormData();
+                formData.append('cmd', command);
+                const response = await fetch('/send_command', { method: 'POST', body: formData });
+                const result = await response.json();
+                const msg = (result && result.message) ? result.message : 'OK';
+                document.getElementById('status').textContent = msg;
+                appendLog(`[CMD] ${command} => ${msg}`);
+                return { ok: true, message: msg };
+            } catch (err) {
+                const emsg = `Failed to send command: ${err&&err.message?err.message:err}`;
+                document.getElementById('status').textContent = emsg;
+                appendLog(emsg);
+                return { ok: false, message: emsg };
             }
         }
 
-        function sendStop() {
-            sendCommand('stop');
+        async function getGPS() {
+            try {
+                const formData = new FormData();
+                formData.append('cmd', 'get GPS pose');
+                const response = await fetch('/gps', { method: 'POST', body: formData });
+                const result = await response.json();
+                const { latitude, longitude, azimuth } = result.message || {};
+                document.getElementById('gps').textContent = `GPS latitude:${latitude} longitude:${longitude} azimuth:${azimuth}`;
+            } catch (e) {
+                // keep silent in UI spam; log once in panel
+            }
         }
 
+        async function getUWB() {
+            try {
+                const formData = new FormData();
+                formData.append('cmd', 'get UWB pose');
+                const response = await fetch('/uwb', { method: 'POST', body: formData });
+                const result = await response.json();
+                const { x, y, yaw } = result.message || {};
+                document.getElementById('uwb').textContent = `UWB x:${x} y:${y} yaw:${yaw}`;
+            } catch (e) {
+                // silent
+            }
+        }
+
+        async function getLog() {
+            try {
+                const formData = new FormData();
+                formData.append('cmd', 'get log');
+                const response = await fetch('/log', { method: 'POST', body: formData });
+                const result = await response.json();
+                appendLog(`${result.message}`);
+            } catch (e) { /* silent */ }
+        }
+
+        // --- Walk controls ---
+        async function applyWalkSettings() {
+            const state = document.getElementById('walkState').value; // Static | AI Classic | AI Free
+            const speed = document.getElementById('walkSpeed').value; // -1 | 0 | 1
+
+            // Validate client-side just in case
+            const validStates = new Set(['Static', 'Classic', 'Free']);
+            const validSpeeds = new Set(['-1', '0', '1']);
+            if (!validStates.has(state) || !validSpeeds.has(String(speed))) {
+                const msg = 'Invalid walk settings on client';
+                document.getElementById('walkStatus').textContent = msg;
+                appendLog(`[WALK] ${msg}`);
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('walk_state', state);
+            fd.append('walk_speed', speed);
+            try {
+                const resp = await fetch('/set_walk_state_speed', { method: 'POST', body: fd });
+                const result = await resp.json();
+                if (resp.ok && result && result.status === 'success') {
+                    const msg = result.message || `Set Walk State: ${state}, Speed: ${speed}`;
+                    document.getElementById('walkStatus').textContent = msg;
+                    appendLog(`[WALK] ${msg}`);
+                } else {
+                    const emsg = (result && result.message) ? result.message : 'Failed to set walk settings';
+                    document.getElementById('walkStatus').textContent = emsg;
+                    appendLog(`[WALK][ERROR] ${emsg}`);
+                }
+            } catch (err) {
+                const emsg = `Network error setting walk settings: ${err && err.message ? err.message : err}`;
+                document.getElementById('walkStatus').textContent = emsg;
+                appendLog(`[WALK][ERROR] ${emsg}`);
+            }
+        }
+
+        // --- UI wiring ---
         function refreshImage() {
             const img = document.getElementById('liveImage');
             img.src = '/image?rand=' + Math.random();
         }
 
-        function refreshGPS() {
-            getGPS();
-        }
-
-        function refreshUWB() {
-            getUWB();
-        }
-
-        function refreshLog() {
-            getLog();
-        }
-
         function appendLog(message) {
-            if (!message || message.trim() === '') return;
-
+            if (!message || String(message).trim() === '') return;
             const logPanel = document.getElementById('logPanel');
-            // const timeStr = new Date().toLocaleTimeString();
-
             const line = document.createElement('div');
-            line.textContent = `${message}`;
+            line.textContent = String(message);
             logPanel.appendChild(line);
-
-            // 限制最多 1000 条日志行
-            if (logPanel.childNodes.length > 100) {
-                logPanel.removeChild(logPanel.firstChild);
-            }
-
-            // 自动滚动到底部
+            if (logPanel.childNodes.length > 100) logPanel.removeChild(logPanel.firstChild);
             logPanel.scrollTop = logPanel.scrollHeight;
         }
 
-        setInterval(refreshImage, 100);
-        setInterval(refreshGPS, 100);
-        setInterval(refreshUWB, 100);
-        setInterval(refreshLog, 100);
-
-        document.getElementById('voiceButton').addEventListener('click', async () => {
-            const btn = document.getElementById('voiceButton');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-            try {
-                const response = await fetch('/audio', { method: 'POST' });
-                const result = await response.json();
-                document.getElementById('cmdInput').value = result.message;
-            } catch (error) {
-                console.error('Error starting recording:', error);
-                document.getElementById('status').textContent = 'Failed to start recording';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🎤 Speak';
-            }
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const cmd = document.getElementById('cmdInput').value;
+            if (cmd.trim() !== '') sendCommand(cmd);
         });
+        document.getElementById('stopBtn').addEventListener('click', () => sendCommand('stop'));
+        // document.getElementById('voiceButton').addEventListener('click', async () => {
+        //     const btn = document.getElementById('voiceButton');
+        //     btn.disabled = true; btn.textContent = 'Sending...';
+        //     try {
+        //         const response = await fetch('/audio', { method: 'POST' });
+        //         const result = await response.json();
+        //         document.getElementById('cmdInput').value = result.message;
+        //     } catch (error) {
+        //         console.error('Error starting recording:', error);
+        //         document.getElementById('status').textContent = 'Failed to start recording';
+        //     } finally {
+        //         btn.disabled = false; btn.textContent = '🎤 Speak';
+        //     }
+        // });
+        document.getElementById('applyWalkBtn').addEventListener('click', applyWalkSettings);
+
+        // Optional: apply immediately on change (comment these two lines out if you prefer explicit Apply only)
+        document.getElementById('walkState').addEventListener('change', applyWalkSettings);
+        document.getElementById('walkSpeed').addEventListener('change', applyWalkSettings);
+
+        // Polling (consider increasing intervals in production to reduce load)
+        setInterval(refreshImage, 100);
+        setInterval(getGPS, 200);   // was 100; eased a bit
+        setInterval(getUWB, 200);   // was 100; eased a bit
+        setInterval(getLog, 250);   // was 100; eased a bit
     </script>
 </body>
 </html>
